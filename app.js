@@ -4,8 +4,62 @@ const map    = (v,a1,a2,b1=0,b2=1)=>Math.min(Math.max((v-a1)/(a2-a1),0),1)*(b2-b
 const smooth = t=>t*t*(3-2*t);
 const easeOut= t=>t*(2-t);
 
+// ====== SESIÓN + NAVBAR (versión final usando session-status.php) ======
+(function () {
+  // Ruta fija a TU endpoint (con guion)
+  const SESSION_URL = '/surrealismo/subpaginas/session-status.php';
+
+  // Clase global en <html> para que el CSS cambie visibilidad del navbar
+  function setAuthClass(logged){
+    const html = document.documentElement;
+    html.classList.remove('html-is-guest','html-is-logged');
+    html.classList.add(logged ? 'html-is-logged' : 'html-is-guest');
+  }
+
+  // Si falta “Mi cuenta / Salir”, los inyecto (solo cuando hay sesión)
+  function ensureAccountLinks(logged){
+    if (!logged) return;
+    const nav = document.querySelector('header .nav');
+    if (!nav) return;
+    const baseHref = location.pathname.includes('/subpaginas/') ? './' : 'subpaginas/';
+
+    if (!nav.querySelector('a[href$="mi-cuenta.php"]')) {
+      const a = document.createElement('a');
+      a.href = baseHref + 'mi-cuenta.php';
+      a.textContent = 'Mi cuenta';
+      a.className = 'nav-when-logged';
+      nav.appendChild(a);
+    }
+    if (!nav.querySelector('a[href$="logout.php"]')) {
+      const a = document.createElement('a');
+      a.href = baseHref + 'logout.php';
+      a.textContent = 'Salir';
+      a.className = 'nav-when-logged';
+      nav.appendChild(a);
+    }
+  }
+
+  async function run(){
+    try{
+      const r = await fetch(SESSION_URL, { credentials:'same-origin', cache:'no-store' });
+      const s = r.ok ? await r.json() : { logged:false };
+      const logged = !!s.logged;
+      setAuthClass(logged);
+      ensureAccountLinks(logged);
+    }catch(_){
+      setAuthClass(false);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run, { once:true });
+  } else {
+    run();
+  }
+})();
 
 
+// ===== TOASTS (incluye removed)
 window.showToast = function(msg, ms=2600){
   let t = document.createElement('div');
   t.className = 'toast is-visible';
@@ -20,15 +74,19 @@ window.showToast = function(msg, ms=2600){
   const er = p.get('err');
   if (ok === 'login')    showToast('Sesión iniciada.');
   if (ok === 'register') showToast('Cuenta creada. ¡Bienvenid@!');
+  if (ok === 'fav')      showToast('Guardado en Favoritos.');
+  if (ok === 'removed')  showToast('Favorito quitado.');
   if (ok === 'logout')   showToast('Cerraste sesión.');
   if (er)                showToast(er);
 })();
 
+// ===== Elevación del header
 const header = document.querySelector('.hdr.glass');
 function setNavElevation(){ header && header.classList.toggle('is-scrolled', window.scrollY>8); }
 document.addEventListener('scroll', setNavElevation, {passive:true});
 document.addEventListener('DOMContentLoaded', setNavElevation);
 
+// ===== Portrait cards (tap para revelar en touch)
 document.querySelectorAll('.portrait').forEach(card=>{
   const prefersHover = window.matchMedia('(hover:hover)').matches;
   function toggle(){ if(!prefersHover) card.classList.toggle('reveal'); }
@@ -36,6 +94,7 @@ document.querySelectorAll('.portrait').forEach(card=>{
   card.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle(); } });
 });
 
+// ===== Hero scroll FX
 (function(){
   const hero = document.getElementById('hero');
   if (!hero) return;
@@ -111,6 +170,7 @@ document.querySelectorAll('.portrait').forEach(card=>{
   }
 })();
 
+// ===== Blob Three.js
 (function(){
   const mount = document.getElementById('hero-blob');
   if (!mount || !window.THREE) return;
@@ -165,6 +225,7 @@ document.querySelectorAll('.portrait').forEach(card=>{
   })(t0);
 })();
 
+// ===== ArtFrame slider simple
 (function(){
   const frame=document.getElementById('artFrame'); if(!frame) return;
   const slides=[...frame.querySelectorAll('.slide')];
@@ -183,6 +244,7 @@ document.querySelectorAll('.portrait').forEach(card=>{
   frame.addEventListener('keydown',e=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); timer?stop():start(); } });
 })();
 
+// ===== Ticker auto
 (function(){
   const root=document.getElementById('tickerToday'); if(!root) return;
   const rows=root.querySelectorAll('.ticker__row');
@@ -206,6 +268,7 @@ document.querySelectorAll('.portrait').forEach(card=>{
   window.addEventListener('resize', buildAll);
 })();
 
+// ===== MicroMosaic assets
 (function(){
   const root = document.getElementById('microMosaic');
   if (!root) return;
@@ -235,6 +298,7 @@ document.querySelectorAll('.portrait').forEach(card=>{
   });
 })();
 
+// ===== Carrusel Obras
 (() => {
   const start = () => {
     const root = document.getElementById('obCarousel');
@@ -325,6 +389,7 @@ document.querySelectorAll('.portrait').forEach(card=>{
   }
 })();
 
+// ===== TOC Figuras (scroll + highlight)
 (() => {
   const main = document.querySelector('main.fig');
   const toc  = main?.querySelector('.fig-toc');
@@ -375,7 +440,7 @@ document.querySelectorAll('.portrait').forEach(card=>{
       ratios.forEach((r,id)=>{ if (r > bestR){ bestR = r; bestId = id; } });
       if (bestR > 0){ setActive(bestId); return; }
 
-      const navH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 64;
+      const navH = parseInt(getComputedStyle(document.documentElement).getProperty('--nav-h')) || 64;
       const probeY = window.scrollY + navH + innerHeight * 0.35;
       let closestId = activeId, minD = Infinity;
       sections.forEach(sec=>{
@@ -392,9 +457,8 @@ document.querySelectorAll('.portrait').forEach(card=>{
     sections.forEach(sec => io.observe(sec));
     setActive(activeId);
   } else {
-
     function onScroll(){
-      const navH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 64;
+      const navH = parseInt(getComputedStyle(document.documentElement).getProperty('--nav-h')) || 64;
       const probeY = window.scrollY + navH + innerHeight * 0.35;
       let current = sections[0].id;
       sections.forEach(sec=>{ if (sec.offsetTop <= probeY) current = sec.id; });
@@ -406,6 +470,7 @@ document.querySelectorAll('.portrait').forEach(card=>{
   }
 })();
 
+// ===== Hotmap Orígenes (popover)
 (() => {
   const hotmap = document.querySelector('.ori-map .hotmap');
   if (!hotmap) return;
@@ -468,7 +533,8 @@ document.querySelectorAll('.portrait').forEach(card=>{
     if (!pop.hidden && lastDot) placePopOver(lastDot);
   });
 })();
-// Clear (X) del buscador en resultados/archivo
+
+// ===== Buscar (clear X en Archivo/Resultados)
 (function(){
   const q = document.getElementById('arcQuery');
   const x = document.getElementById('arcClear');
@@ -477,98 +543,4 @@ document.querySelectorAll('.portrait').forEach(card=>{
   x.addEventListener('click', ()=>{ q.value=''; q.focus(); toggle(); });
   q.addEventListener('input', toggle);
   toggle();
-})();
-// Curaduría: mostrar/usar botones de favoritos si hay sesión
-(function(){
-  function siteRootFromPath() {
-    const p = location.pathname;
-    if (p.includes('/subpaginas/')) return p.split('/subpaginas/')[0] + '/';
-    return p.endsWith('/') ? p : p.replace(/[^/]*$/, '');
-  }
-  const BASE = siteRootFromPath();
-
-  function initFavs(logged){
-    document.querySelectorAll('.fav-btn').forEach(btn=>{
-      btn.hidden = !logged;
-      if (logged && !btn.dataset.bound){
-        btn.dataset.bound = '1';
-        btn.addEventListener('click', async ()=>{
-          const id = parseInt(btn.dataset.id || '0', 10);
-          if (!id) return;
-          try{
-            const res = await fetch(`${BASE}subpaginas/toggle_fav.php`, {
-              method: 'POST',
-              headers: {'Content-Type':'application/json'},
-              credentials: 'same-origin',
-              body: JSON.stringify({ item_id: id })
-            });
-            const out = await res.json();
-            if (out.ok){
-              if (out.state === 'added') { btn.textContent = 'Quitar'; }
-              if (out.state === 'removed'){ btn.textContent = '＋ Guardar'; }
-            }
-          }catch(_){}
-        });
-      }
-    });
-  }
-
-  // Preguntamos estado de sesión y armamos botones
-  fetch(`${BASE}subpaginas/session_status.php`, { cache: 'no-store', credentials: 'same-origin' })
-    .then(r => r.ok ? r.json() : { logged:false })
-    .then(s => initFavs(!!s.logged))
-    .catch(()=>{});
-})();
-
-
-// ===== AUTH TOGGLE ÚNICO: navbar + favoritos =====
-(function () {
-  function siteRootFromPath() {
-    const p = location.pathname;
-    if (p.includes('/subpaginas/')) return p.split('/subpaginas/')[0] + '/';
-    return p.endsWith('/') ? p : p.replace(/[^/]*$/, '');
-  }
-  const BASE = siteRootFromPath();
-
-  function show(sel){ document.querySelectorAll(sel).forEach(n=>{ n.style.display=''; n.hidden=false; }); }
-  function hide(sel){ document.querySelectorAll(sel).forEach(n=>{ n.style.display='none'; n.hidden=true; }); }
-
-  function updateNav(logged){
-    if (logged){
-      hide('.nav-when-guest');  show('.nav-when-logged');
-      hide('.js-auth-logged-out'); show('.js-auth-logged-in');
-    } else {
-      show('.nav-when-guest');  hide('.nav-when-logged');
-      show('.js-auth-logged-out'); hide('.js-auth-logged-in');
-    }
-  }
-
-  function initFavs(logged){
-    document.querySelectorAll('.fav-btn').forEach(btn=>{
-      const id = parseInt(btn.dataset.id || '0', 10);
-      btn.hidden = !(logged && id);
-      if (logged && id && !btn.dataset.bound){
-        btn.dataset.bound = '1';
-        btn.addEventListener('click', async ()=>{
-          try{
-            const res = await fetch(`${BASE}subpaginas/toggle_fav.php`, {
-              method: 'POST',
-              headers: { 'Content-Type':'application/json' },
-              credentials: 'same-origin',
-              body: JSON.stringify({ item_id: id })
-            });
-            const out = await res.json();
-            if (out.ok){
-              btn.textContent = (out.state === 'added') ? 'Quitar' : '＋ Guardar';
-            }
-          }catch(e){}
-        });
-      }
-    });
-  }
-
-  fetch(`${BASE}subpaginas/session_status.php`, { cache: 'no-store', credentials: 'same-origin' })
-    .then(r => r.ok ? r.json() : {logged:false})
-    .then(s => { const logged = !!s.logged; updateNav(logged); initFavs(logged); })
-    .catch(()=>{ /* default: invitado */ });
 })();

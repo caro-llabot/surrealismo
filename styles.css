@@ -1581,3 +1581,17 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
   box-shadow: 0 1.5px 0 rgba(0,0,0,.04);
 }
 .arc-img { border-top-left-radius: 14px; border-top-right-radius: 14px; }
+
+
+/* ===== Auth state ===== */
+.nav .nav-when-logged,
+.nav .js-auth-logged-in { display: none !important; }
+
+.html-is-guest .nav .nav-when-guest,
+.html-is-guest .nav .js-auth-logged-out { display: inline-flex !important; }
+
+.html-is-logged .nav .nav-when-logged,
+.html-is-logged .nav .js-auth-logged-in { display: inline-flex !important; }
+
+.html-is-logged .nav .nav-when-guest,
+.html-is-logged .nav .js-auth-logged-out { display: none !important; }

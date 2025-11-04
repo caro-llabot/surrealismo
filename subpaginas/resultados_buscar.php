@@ -195,11 +195,12 @@ $totalPages = max(1, (int)ceil($total / $perPage));
                       <a class="arc-link" href="<?= $url ?>" target="_blank" rel="noopener">Ver recurso →</a>
                     <?php endif; ?>
                     <?php if (!empty($_SESSION['user_id'])): ?>
-  <form class="fav-form" method="post" action="./favoritos_guardar.php" style="display:inline">
-    <input type="hidden" name="item_id" value="<?= (int)$id ?>">
-    <button class="btn-secondary">＋ Guardar</button>
-  </form>
-<?php endif; ?>
+                      <form class="fav-form" method="post" action="./favoritos_guardar.php" style="display:inline">
+                        <input type="hidden" name="item_id" value="<?= (int)$it['id'] ?>">
+                        <button class="btn-secondary" type="submit">＋ Guardar</button>
+                      </form>
+                    <?php endif; ?>
+
 
                   </div>
                 </div>

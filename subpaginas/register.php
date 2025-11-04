@@ -78,13 +78,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <a href="<?= htmlspecialchars($BASE_URL) ?>/index.html#hero" class="brand">Surrealismo</a>
   <nav class="nav" aria-label="Secciones">
   <a href="./origenes.html">Orígenes</a>
-<a href="./figuras.html">Figuras</a>
-<a href="./obras.html">Obras</a>
-<a href="./archivo.php">Archivo</a>
-<a class="nav-when-guest"  href="./login.php">Ingresar</a>
-<a class="nav-when-guest"  href="./register.php">Crear cuenta</a>
-<a class="nav-when-logged" href="./mi-cuenta.php" style="display:none">Mi cuenta</a>
-<a class="nav-when-logged" href="./logout.php" style="display:none">Salir</a>
+  <a href="./figuras.html">Figuras</a>
+  <a href="./obras.html">Obras</a>
+  <a href="./archivo.php">Archivo</a>
+  <a class="nav-when-guest"  href="./login.php">Ingresar</a>
+  <a class="nav-when-guest"  href="./register.php">Crear cuenta</a>
+  <a class="nav-when-logged" href="./mi-cuenta.php" style="display:none">Mi cuenta</a>
+  <a class="nav-when-logged" href="./logout.php" style="display:none">Salir</a>
 
   </nav>
 </header>
