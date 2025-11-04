@@ -1408,3 +1408,90 @@ input:focus{ border-color: rgba(0,0,0,.6); box-shadow: 0 0 0 3px rgba(0,0,0,.08)
 .inf-card:focus-within .inf-caption p{
   max-height: 300px;
 }
+
+
+
+
+/* ===== Resultados de búsqueda (solo esta página) ===== */
+.is-results .arc-hero { padding-top: 6.5rem; padding-bottom: .75rem; }
+.is-results .arc-h1 {
+  /* más razonable que el mega título */
+  font-size: clamp(2.25rem, 7vw, 4rem);
+  line-height: 1.05;
+  margin: 0 0 .75rem;
+}
+
+.is-results .arc-search {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: .5rem;
+  max-width: 720px;
+}
+.is-results .arc-search input[type="search"] { width: 100%; }
+.is-results .arc-search .btn-primary { white-space: nowrap; }
+
+.is-results .arc-list { padding-top: .25rem; }
+.is-results #arcList.arc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem 1.25rem;
+}
+
+/* Card */
+.is-results .arc-card {
+  display: grid;
+  gap: .5rem;
+  padding: .75rem;
+  border: 1px solid rgba(0,0,0,.12);
+  border-radius: 12px;
+  background: #fffdf8; /* combina con tu paleta */
+  box-shadow: 0 .5px 0 rgba(0,0,0,.05);
+}
+
+/* Imagen fija para evitar saltos y recortes feos */
+.is-results .arc-img {
+  width: 100%;
+  height: 190px;      /* ajustá a tu gusto: 180–220px */
+  object-fit: cover;
+  border-radius: 10px;
+  display: block;
+}
+
+/* Título y meta con clamping para que no rompan el layout */
+.is-results .arc-t {
+  margin: .25rem 0 .1rem;
+  font-size: 1.05rem;
+  line-height: 1.2;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.is-results .arc-meta {
+  color: #6c6c6c;
+  font-size: .9rem;
+  margin: 0 0 .25rem;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1;
+  overflow: hidden;
+}
+.is-results .arc-desc {
+  color: #3b3b3b;
+  font-size: .92rem;
+  margin: 0 0 .35rem;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
+/* Link “Ver recurso →” alineado y discreto */
+.is-results .arc-link {
+  justify-self: start;
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+.is-results .arc-link:hover { border-bottom-color: currentColor; }
+
+/* Responsive: un poco más de aire en mobile */
+@media (max-width: 640px) {
+  .is-results .arc-hero { padding-top: 5.5rem; }
+  .is-results #arcList.arc-grid { gap: .75rem; }
+  .is-results .arc-img { height: 170px; }
+}

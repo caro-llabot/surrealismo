@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,100..700&family=Oswald:wght@200..700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="../styles.css">
-  <script src="../app.js" defer></script>
+  
 </head>
 <body>
   <header class="hdr glass fixed" role="banner">
@@ -33,10 +33,19 @@
         <h1 class="arc-h1">Archivo</h1>
         <p class="arc-lead">Material académico, fuentes primarias y enlaces de investigación sobre el surrealismo.</p>
 
-        <form class="arc-search" role="search" aria-label="Buscar en el archivo">
-          <input id="arcQuery" type="search" placeholder="Buscar por título, autor, año o etiqueta…" autocomplete="off" />
+        <form class="arc-search" action="./resultados_buscar.php" method="post" role="search" aria-label="Buscar en el archivo">
+          <input
+            id="arcQuery"
+            name="buscar"
+            type="search"
+            placeholder="Buscar por título, autor, año o etiqueta…"
+            autocomplete="off"
+            required
+          >
           <button type="button" id="arcClear" aria-label="Limpiar búsqueda">×</button>
+          <button type="submit" class="btn-primary" aria-label="Buscar">Buscar</button>
         </form>
+        
 
         <div class="arc-tags" aria-label="Filtros rápidos">
           <button class="arc-tag" data-tag="manifiesto">Manifiesto</button>
@@ -248,42 +257,6 @@
 </footer>
 <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
 
-  <script src="/app.js" defer></script>
-  <script>
-  // ===== Archivo: filtro por texto/etiquetas (client-side)
-  (function(){
-    const q = document.getElementById('arcQuery');
-    const clear = document.getElementById('arcClear');
-    const list = document.getElementById('arcList');
-    const items = Array.from(list.querySelectorAll('.arc-item'));
-    const tags = Array.from(document.querySelectorAll('.arc-tag'));
-
-    function applyFilter(value){
-      const v = (value || '').trim().toLowerCase();
-      let visible = 0;
-      items.forEach(li=>{
-        const hay = li.dataset.tags || '';
-        const ok = !v || hay.toLowerCase().includes(v);
-        li.style.display = ok ? '' : 'none';
-        if (ok) visible++;
-      });
-      list.dataset.empty = visible ? '0' : '1';
-    }
-
-    q.addEventListener('input', ()=>applyFilter(q.value));
-    clear.addEventListener('click', ()=>{ q.value=''; q.focus(); applyFilter(''); });
-
-    tags.forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        const t = btn.dataset.tag || '';
-        q.value = t;
-        applyFilter(t);
-      });
-    });
-
-    // inicial
-    applyFilter('');
-  })();
-  </script>
+  
 </body>
 </html>

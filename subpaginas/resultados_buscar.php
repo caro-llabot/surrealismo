@@ -1,103 +1,49 @@
 <?php
 declare(strict_types=1);
 ini_set('display_errors','1');
-ini_set('display_startup_errors','1');
 error_reporting(E_ALL);
-
 session_start();
 
 $ROOT_FS = dirname(__DIR__);
-
 $BASE_URL = rtrim(dirname(dirname($_SERVER['SCRIPT_NAME'] ?? '/')), '/');
 if ($BASE_URL === '') $BASE_URL = '/';
 
-$candidates_connect = [
+foreach ([
   __DIR__ . '/connect.php',
   $ROOT_FS . '/connect.php',
   $ROOT_FS . '/includes/connect.php',
   $ROOT_FS . '/inc/connect.php',
-];
-foreach ($candidates_connect as $p) { if (is_file($p)) { require_once $p; break; } }
-
-$candidates_db = [
-  $ROOT_FS . '/includes/db.php',
-  $ROOT_FS . '/inc/db.php',
-];
-foreach ($candidates_db as $p) { if (is_file($p)) { require_once $p; break; } }
-
-$candidates_auth = [
-  $ROOT_FS . '/includes/auth.php',
-  $ROOT_FS . '/inc/auth.php',
-];
-foreach ($candidates_auth as $p) { if (is_file($p)) { require_once $p; break; } }
+] as $p) { if (is_file($p)) { require_once $p; break; } }
 
 if (!isset($conexion) || !($conexion instanceof mysqli)) {
   http_response_code(500);
-  echo '<h1>Error de configuración</h1><p>No se pudo cargar <code>connect.php</code> / <code>db.php</code>. Verificá su ubicación.</p>';
+  echo '<h1>Error</h1><p>No hay conexión a la base.</p>';
   exit;
 }
 
-$errors = [];
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $email = trim($_POST['email'] ?? '');
-  $pass  = $_POST['password'] ?? '';
-
-  if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Email inválido.';
-  if ($pass === '') $errors[] = 'Ingresá tu contraseña.';
-
-  if (!$errors) {
-    $stmt = mysqli_prepare($conexion, "SELECT id, full_name, email, password_hash FROM users WHERE email = ? LIMIT 1");
-    if (!$stmt) {
-      $errors[] = 'Error de servidor (DB).';
-    } else {
-      mysqli_stmt_bind_param($stmt, "s", $email);
-      mysqli_stmt_execute($stmt);
-      $res = mysqli_stmt_get_result($stmt);
-      $u   = mysqli_fetch_assoc($res);
-
-      if (!$u || !password_verify($pass, $u['password_hash'])) {
-        $errors[] = 'Credenciales incorrectas.';
-      } else {
-        $_SESSION['user_id']    = (int)$u['id'];
-        $_SESSION['user_name']  = $u['full_name'];
-        $_SESSION['user_email'] = $u['email'];
-
-        mysqli_stmt_close($stmt);
-        mysqli_close($conexion);
-
-        header('Location: ' . rtrim($BASE_URL, '/') . '/index.html?ok=login');
-        exit;
-      }
-      mysqli_stmt_close($stmt);
-    }
-  }
-}
+$buscar = isset($_POST['buscar']) ? trim((string)$_POST['buscar']) : '';
 ?>
 <!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <title>Surrealismo — Ingresar</title>
+  <title>Archivo — Resultados de búsqueda</title>
 
-  <!-- Fuentes -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&family=Oswald:wght@200..700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;600&family=Oswald:wght@400;600;700&display=swap" rel="stylesheet">
 
-  <!-- Assets del proyecto (desde la raíz del sitio) -->
   <link rel="stylesheet" href="<?= htmlspecialchars($BASE_URL) ?>/styles.css">
   <script src="<?= htmlspecialchars($BASE_URL) ?>/app.js" defer></script>
 </head>
-<body>
+<body class="page-archivo is-results">>
 <header class="hdr glass fixed" role="banner">
   <a href="<?= htmlspecialchars($BASE_URL) ?>/index.html#hero" class="brand">Surrealismo</a>
   <nav class="nav" aria-label="Secciones">
     <a href="<?= htmlspecialchars($BASE_URL) ?>/subpaginas/origenes.html">Orígenes</a>
     <a href="<?= htmlspecialchars($BASE_URL) ?>/subpaginas/figuras.html">Figuras</a>
     <a href="<?= htmlspecialchars($BASE_URL) ?>/subpaginas/obras.html">Obras</a>
-    <a href="<?= htmlspecialchars($BASE_URL) ?>/subpaginas/archivo.html">Archivo</a>
-
+    <a href="<?= htmlspecialchars($BASE_URL) ?>/subpaginas/archivo.html" aria-current="page">Archivo</a>
     <?php if (!empty($_SESSION['user_id'])): ?>
       <a href="<?= htmlspecialchars($BASE_URL) ?>/subpaginas/logout.php">Salir</a>
     <?php else: ?>
@@ -106,33 +52,110 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   </nav>
 </header>
 
-<main class="auth">
-  <section class="auth-card">
-    <h1 class="auth-title">Ingresar</h1>
+<main id="main" class="arc" style="padding-top:7rem;">
+  <section class="arc-hero">
+    <div class="wrap">
+      <h1 class="arc-h1">Resultados de búsqueda</h1>
 
-    <?php if ($errors): ?>
-      <div class="form-msg" style="color:#b02222;">
-        <?= htmlspecialchars(implode(' · ', $errors)) ?>
-      </div>
-    <?php endif; ?>
+      <form class="arc-search" action="./resultados_buscar.php" method="post" role="search" aria-label="Buscar en el archivo" style="margin:.5rem 0 1.25rem;">
+        <label for="arcQuery" class="visually-hidden">Buscar</label>
+        <input
+          id="arcQuery"
+          name="buscar"
+          type="search"
+          placeholder="Buscar en el archivo..."
+          value="<?= htmlspecialchars($buscar) ?>"
+          autocomplete="off"
+          required
+        >
+        <button type="submit" class="btn-primary" aria-label="Buscar">Buscar</button>
+        <a class="link" href="<?= htmlspecialchars($BASE_URL) ?>/subpaginas/archivo.html" style="margin-left:.75rem;">Volver al Archivo</a>
+      </form>
 
-    <form method="POST" novalidate>
-      <div class="form-row">
-        <label for="email">Email</label>
-        <input id="email" name="email" type="email" required value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
-      </div>
-      <div class="form-row">
-        <label for="password">Contraseña</label>
-        <input id="password" name="password" type="password" minlength="8" required>
-      </div>
-      <button class="btn-primary" type="submit">Ingresar</button>
-      <p class="form-note">
-        ¿No tenés cuenta?
-        <a class="link" href="<?= htmlspecialchars($BASE_URL) ?>/subpaginas/register.php">Crear cuenta</a>
-      </p>
-    </form>
+      <?php if ($buscar === ''): ?>
+        <p class="arc-lead">Escribí un término y presioná “Buscar”.</p>
+      <?php else: ?>
+        <p class="arc-lead">Tu consulta: <em><?= htmlspecialchars($buscar) ?></em></p>
+      <?php endif; ?>
+    </div>
+  </section>
+
+  <section class="arc-list">
+    <div class="wrap">
+      <?php
+      if ($buscar !== '') {
+        $safe = mysqli_real_escape_string($conexion, $buscar);
+        $sql = "
+          SELECT id, title, author, year, type, description, url, thumb
+          FROM archivo_items
+          WHERE title LIKE '%$safe%'
+             OR author LIKE '%$safe%'
+             OR tags LIKE '%$safe%'
+             OR description LIKE '%$safe%'
+          ORDER BY year DESC, title ASC
+        ";
+        $rs = mysqli_query($conexion, $sql);
+
+        if (!$rs) {
+          echo '<div class="form-msg" style="color:#b02222;">Error en la consulta: '
+             . htmlspecialchars(mysqli_error($conexion))
+             . '</div>';
+        } else {
+          $total = mysqli_num_rows($rs);
+          echo '<p><strong>Cantidad de resultados:</strong> ' . $total . '</p>';
+
+          if ($total < 1) {
+            echo '<div id="arcEmpty" class="muted" style="margin-top:1rem;">No hay resultados para esa búsqueda.</div>';
+          } else {
+            echo '<ul class="arc-grid" id="arcList">'; // ← MISMA CLASE que en archivo.html
+            while ($it = mysqli_fetch_assoc($rs)) {
+              $title = htmlspecialchars($it['title'] ?? '');
+              $author = htmlspecialchars($it['author'] ?? '');
+              $year = htmlspecialchars((string)($it['year'] ?? ''));
+              $type = htmlspecialchars($it['type'] ?? '');
+              $desc = htmlspecialchars(mb_substr((string)($it['description'] ?? ''), 0, 160));
+              $url  = htmlspecialchars($it['url'] ?? '');
+              $thumb = htmlspecialchars($it['thumb'] ?? '');
+
+              $metaParts = array_filter([$author, $year, ucfirst(strtolower($type))]);
+              $meta = htmlspecialchars(implode(' · ', $metaParts));
+
+              echo '<li class="arc-item">';
+                echo '<div class="arc-card">';
+
+                // MISMO MARCADO QUE EN archivo.html
+                if ($thumb) {
+                  echo '<img class="arc-img" src="'.$thumb.'" alt="'.$title.'" loading="lazy">';
+                }
+
+                echo '<h3 class="arc-t">'.$title.'</h3>';
+
+                if ($meta) {
+                  echo '<p class="arc-meta">'.$meta.'</p>';
+                }
+
+                if ($desc) {
+                  echo '<p class="arc-desc">'.$desc.'...</p>';
+                }
+
+                if ($url) {
+                  echo '<a class="arc-link" href="'.$url.'" target="_blank" rel="noopener">Ver recurso →</a>';
+                }
+
+                echo '</div>';
+              echo '</li>';
+            }
+            echo '</ul>';
+          }
+          mysqli_free_result($rs);
+        }
+        mysqli_close($conexion);
+      }
+      ?>
+    </div>
   </section>
 </main>
+
 <footer class="site-footer glass" role="contentinfo">
   <div class="footer-inner two-col">
 
@@ -202,9 +225,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   <p class="footer-copy">© <span id="year"></span> Surrealismo — Proyecto académico.</p>
 </footer>
-<?php if (isset($_GET['bye'])): ?>
-  <div class="toast is-visible">Cerraste sesión correctamente.</div>
-  <script>setTimeout(()=>document.querySelector('.toast')?.classList.add('is-hidden'), 2500);</script>
-<?php endif; ?>
 </body>
 </html>
