@@ -110,15 +110,15 @@ $totalPages = max(1, (int)ceil($total / $perPage));
 <header class="hdr glass fixed" role="banner">
   <a href="<?= h($BASE_URL) ?>/index.html#hero" class="brand">Surrealismo</a>
   <nav class="nav" aria-label="Secciones">
-    <a href="<?= h($BASE_URL) ?>/subpaginas/origenes.html">Orígenes</a>
-    <a href="<?= h($BASE_URL) ?>/subpaginas/figuras.html">Figuras</a>
-    <a href="<?= h($BASE_URL) ?>/subpaginas/obras.html">Obras</a>
-    <a href="<?= h($BASE_URL) ?>/subpaginas/archivo.php" aria-current="page">Archivo</a>
+  <a href="./origenes.html">Orígenes</a>
+<a href="./figuras.html">Figuras</a>
+<a href="./obras.html">Obras</a>
+<a href="./archivo.php">Archivo</a>
+<a class="nav-when-guest"  href="./login.php">Ingresar</a>
+<a class="nav-when-guest"  href="./register.php">Crear cuenta</a>
+<a class="nav-when-logged" href="./mi-cuenta.php" style="display:none">Mi cuenta</a>
+<a class="nav-when-logged" href="./logout.php" style="display:none">Salir</a>
 
-    <a class="nav-when-guest" href="<?= h($BASE_URL) ?>/subpaginas/login.php">Ingresar</a>
-    <a class="nav-when-guest" href="<?= h($BASE_URL) ?>/subpaginas/register.php">Crear cuenta</a>
-    <a class="nav-when-logged" href="./mi-cuenta.php" style="display:none">Mi cuenta</a>
-    <a class="nav-when-logged" href="<?= h($BASE_URL) ?>/subpaginas/logout.php" style="display:none">Salir</a>
   </nav>
 </header>
 
@@ -194,8 +194,13 @@ $totalPages = max(1, (int)ceil($total / $perPage));
                     <?php if ($url): ?>
                       <a class="arc-link" href="<?= $url ?>" target="_blank" rel="noopener">Ver recurso →</a>
                     <?php endif; ?>
-                    <!-- botón curaduría (solo UI; lógica en B) -->
-                    <button class="btn-secondary fav-btn" data-id="<?= $id ?>" hidden>＋ Guardar</button>
+                    <?php if (!empty($_SESSION['user_id'])): ?>
+  <form class="fav-form" method="post" action="./favoritos_guardar.php" style="display:inline">
+    <input type="hidden" name="item_id" value="<?= (int)$id ?>">
+    <button class="btn-secondary">＋ Guardar</button>
+  </form>
+<?php endif; ?>
+
                   </div>
                 </div>
               </li>

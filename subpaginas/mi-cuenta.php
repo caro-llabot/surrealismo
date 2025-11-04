@@ -31,18 +31,22 @@ $rs = $st->get_result(); while($row=$rs->fetch_assoc()) $items[]=$row; $st->clos
   <meta charset="utf-8">
   <title>Mi cuenta — Favoritos</title>
   <link rel="stylesheet" href="<?= h($BASE_URL) ?>/styles.css">
-  <script src="<?= h($BASE_URL) ?>/app.js" defer></script>
+  <script src="../app.js" defer></script>
+
 </head>
 <body class="page-privada">
 <header class="hdr glass fixed" role="banner">
   <a href="<?= h($BASE_URL) ?>/index.html#hero" class="brand">Surrealismo</a>
   <nav class="nav" aria-label="Secciones">
-    <a href="<?= h($BASE_URL) ?>/subpaginas/origenes.html">Orígenes</a>
-    <a href="<?= h($BASE_URL) ?>/subpaginas/figuras.html">Figuras</a>
-    <a href="<?= h($BASE_URL) ?>/subpaginas/obras.html">Obras</a>
-    <a href="<?= h($BASE_URL) ?>/subpaginas/archivo.php">Archivo</a>
-    <a class="nav-when-logged" href="./mi-cuenta.php" style="display:none">Mi cuenta</a>
-    <a class="nav-when-logged" href="<?= h($BASE_URL) ?>/subpaginas/logout.php" style="display:inline">Salir</a>
+  <a href="./origenes.html">Orígenes</a>
+<a href="./figuras.html">Figuras</a>
+<a href="./obras.html">Obras</a>
+<a href="./archivo.php">Archivo</a>
+<a class="nav-when-guest"  href="./login.php">Ingresar</a>
+<a class="nav-when-guest"  href="./register.php">Crear cuenta</a>
+<a class="nav-when-logged" href="./mi-cuenta.php" style="display:none">Mi cuenta</a>
+<a class="nav-when-logged" href="./logout.php" style="display:none">Salir</a>
+
   </nav>
 </header>
 
