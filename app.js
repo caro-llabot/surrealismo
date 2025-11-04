@@ -1,37 +1,10 @@
-
-
 document.documentElement.classList.remove('no-js');
 
 const map    = (v,a1,a2,b1=0,b2=1)=>Math.min(Math.max((v-a1)/(a2-a1),0),1)*(b2-b1)+b1;
 const smooth = t=>t*t*(3-2*t);
 const easeOut= t=>t*(2-t);
 
-(function () {
-  function siteRootFromPath() {
-    const p = location.pathname;
-    if (p.includes('/subpaginas/')) return p.split('/subpaginas/')[0] + '/';
-    return p.endsWith('/') ? p : p.replace(/[^/]*$/, '');
-  }
-  function updateNav(logged) {
-    const showGuest = !logged;
-    document.querySelectorAll('.nav-when-guest')
-      .forEach(n => n.style.display = showGuest ? '' : 'none');
-    document.querySelectorAll('.nav-when-logged')
-      .forEach(n => n.style.display = showGuest ? 'none' : '');
-  }
-  function run() {
-    const endpoint = siteRootFromPath() + 'subpaginas/session-status.php';
-    fetch(endpoint, { cache: 'no-store', credentials: 'same-origin' })
-      .then(r => r.ok ? r.json() : Promise.reject())
-      .then(s => updateNav(!!s.logged))
-      .catch(() => {});
-  }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', run, { once: true });
-  } else {
-    run();
-  }
-})();
+
 
 window.showToast = function(msg, ms=2600){
   let t = document.createElement('div');
@@ -494,4 +467,108 @@ document.querySelectorAll('.portrait').forEach(card=>{
   window.addEventListener('resize', ()=>{
     if (!pop.hidden && lastDot) placePopOver(lastDot);
   });
+})();
+// Clear (X) del buscador en resultados/archivo
+(function(){
+  const q = document.getElementById('arcQuery');
+  const x = document.getElementById('arcClear');
+  if (!q || !x) return;
+  function toggle(){ x.style.visibility = q.value ? 'visible' : 'hidden'; }
+  x.addEventListener('click', ()=>{ q.value=''; q.focus(); toggle(); });
+  q.addEventListener('input', toggle);
+  toggle();
+})();
+// Curaduría: mostrar/usar botones de favoritos si hay sesión
+(function(){
+  function siteRootFromPath() {
+    const p = location.pathname;
+    if (p.includes('/subpaginas/')) return p.split('/subpaginas/')[0] + '/';
+    return p.endsWith('/') ? p : p.replace(/[^/]*$/, '');
+  }
+  const BASE = siteRootFromPath();
+
+  function initFavs(logged){
+    document.querySelectorAll('.fav-btn').forEach(btn=>{
+      btn.hidden = !logged;
+      if (logged && !btn.dataset.bound){
+        btn.dataset.bound = '1';
+        btn.addEventListener('click', async ()=>{
+          const id = parseInt(btn.dataset.id || '0', 10);
+          if (!id) return;
+          try{
+            const res = await fetch(`${BASE}subpaginas/toggle_fav.php`, {
+              method: 'POST',
+              headers: {'Content-Type':'application/json'},
+              credentials: 'same-origin',
+              body: JSON.stringify({ item_id: id })
+            });
+            const out = await res.json();
+            if (out.ok){
+              if (out.state === 'added') { btn.textContent = 'Quitar'; }
+              if (out.state === 'removed'){ btn.textContent = '＋ Guardar'; }
+            }
+          }catch(_){}
+        });
+      }
+    });
+  }
+
+  // Preguntamos estado de sesión y armamos botones
+  fetch(`${BASE}subpaginas/session_status.php`, { cache: 'no-store', credentials: 'same-origin' })
+    .then(r => r.ok ? r.json() : { logged:false })
+    .then(s => initFavs(!!s.logged))
+    .catch(()=>{});
+})();
+
+
+// ===== AUTH TOGGLE ÚNICO: navbar + favoritos =====
+(function () {
+  function siteRootFromPath() {
+    const p = location.pathname;
+    if (p.includes('/subpaginas/')) return p.split('/subpaginas/')[0] + '/';
+    return p.endsWith('/') ? p : p.replace(/[^/]*$/, '');
+  }
+  const BASE = siteRootFromPath();
+
+  function show(sel){ document.querySelectorAll(sel).forEach(n=>{ n.style.display=''; n.hidden=false; }); }
+  function hide(sel){ document.querySelectorAll(sel).forEach(n=>{ n.style.display='none'; n.hidden=true; }); }
+
+  function updateNav(logged){
+    if (logged){
+      hide('.nav-when-guest');  show('.nav-when-logged');
+      hide('.js-auth-logged-out'); show('.js-auth-logged-in');
+    } else {
+      show('.nav-when-guest');  hide('.nav-when-logged');
+      show('.js-auth-logged-out'); hide('.js-auth-logged-in');
+    }
+  }
+
+  function initFavs(logged){
+    document.querySelectorAll('.fav-btn').forEach(btn=>{
+      const id = parseInt(btn.dataset.id || '0', 10);
+      btn.hidden = !(logged && id);
+      if (logged && id && !btn.dataset.bound){
+        btn.dataset.bound = '1';
+        btn.addEventListener('click', async ()=>{
+          try{
+            const res = await fetch(`${BASE}subpaginas/toggle_fav.php`, {
+              method: 'POST',
+              headers: { 'Content-Type':'application/json' },
+              credentials: 'same-origin',
+              body: JSON.stringify({ item_id: id })
+            });
+            const out = await res.json();
+            if (out.ok){
+              btn.textContent = (out.state === 'added') ? 'Quitar' : '＋ Guardar';
+            }
+          }catch(e){}
+        });
+      }
+    });
+  }
+
+  fetch(`${BASE}subpaginas/session_status.php`, { cache: 'no-store', credentials: 'same-origin' })
+    .then(r => r.ok ? r.json() : {logged:false})
+    .then(s => { const logged = !!s.logged; updateNav(logged); initFavs(logged); })
+    .catch(()=>{ /* default: invitado */ });
 })();

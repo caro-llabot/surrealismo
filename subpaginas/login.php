@@ -59,20 +59,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       if (!$u || !password_verify($pass, $u['password_hash'])) {
         $errors[] = 'Credenciales incorrectas.';
       } else {
+        // Inicio de sesión exitoso
         $_SESSION['user_id']    = (int)$u['id'];
         $_SESSION['user_name']  = $u['full_name'];
         $_SESSION['user_email'] = $u['email'];
-
+      
         mysqli_stmt_close($stmt);
         mysqli_close($conexion);
-
-        header('Location: ' . rtrim($BASE_URL, '/') . '/index.html?ok=login');
+      
+        // ✅ Redirige directamente a la página privada “Mi cuenta”
+        header('Location: ' . rtrim($BASE_URL, '/') . '/subpaginas/mi-cuenta.php?ok=login');
         exit;
       }
       mysqli_stmt_close($stmt);
     }
   }
 }
+
 ?>
 <!doctype html>
 <html lang="es">
@@ -98,6 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <a href="<?= htmlspecialchars($BASE_URL) ?>/subpaginas/obras.html">Obras</a>
     <a href="<?= htmlspecialchars($BASE_URL) ?>/subpaginas/archivo.html">Archivo</a>
 
+    <a class="nav-when-logged" href="./mi-cuenta.php" style="display:none">Mi cuenta</a>
     <?php if (!empty($_SESSION['user_id'])): ?>
       <a href="<?= htmlspecialchars($BASE_URL) ?>/subpaginas/logout.php">Salir</a>
     <?php else: ?>
