@@ -544,3 +544,184 @@ document.querySelectorAll('.portrait').forEach(card=>{
   q.addEventListener('input', toggle);
   toggle();
 })();
+
+
+/* ===== LIGHTBOX para Obras (microMosaic + carrusel) ===== */
+/* ===== LIGHTBOX para Obras (microMosaic + carrusel) ===== */
+(() => {
+  const lb    = document.getElementById('obLightbox');
+  if (!lb) return;
+
+  const imgEl  = lb.querySelector('#obLbImg');
+  const capEl  = lb.querySelector('#obLbCap');
+  const btnX   = lb.querySelector('.ob-lb__close');
+  const btnPrev= lb.querySelector('.ob-lb__prev');
+  const btnNext= lb.querySelector('.ob-lb__next');
+
+  let items = [];   // {el, src, alt}
+  let idx   = 0;
+
+  // Recoge imágenes del mosaico + carrusel
+  const getNodes = () =>
+    Array.from(document.querySelectorAll('#microMosaic img, #obCarousel .obc-card img'));
+
+  function collect() {
+    const nodes = getNodes();
+    items = nodes.map(el => ({ el, src: el.currentSrc || el.src, alt: el.alt || '' }));
+    // Accesibilidad y feedback visual
+    nodes.forEach(el => {
+      el.style.cursor = 'zoom-in';
+      el.tabIndex = el.tabIndex || 0;
+    });
+  }
+
+  function paint() {
+    const it = items[idx];
+    if (!it) return;
+    imgEl.src = it.src;
+    imgEl.alt = it.alt;
+    capEl.textContent = it.alt || '';
+  }
+
+  function openAt(i) {
+    if (!items.length) collect();
+    idx = (i + items.length) % items.length;
+    paint();
+    lb.hidden = false;
+    requestAnimationFrame(() => lb.classList.add('is-open'));
+    document.body.classList.add('no-scroll');
+  }
+
+  function close() {
+    lb.classList.remove('is-open');
+    document.body.classList.remove('no-scroll');
+    setTimeout(() => { lb.hidden = true; }, 120);
+  }
+
+  function go(d) {
+    if (!items.length) return;
+    idx = (idx + d + items.length) % items.length;
+    paint();
+  }
+
+  // Delegación en captura: si otros handlers frenan el bubble, igual nos llega
+  document.addEventListener('click', (e) => {
+    // ignorar clics sobre flechas/puntos del carrusel
+    if (e.target.closest('.obc-arrow, .obc-dot')) return;
+
+    const img = e.target.closest('#microMosaic img, #obCarousel .obc-card img');
+    if (!img) return;
+
+    const nodes = getNodes();
+    const i = nodes.indexOf(img);
+    if (i === -1) return;
+
+    // si está dentro de un <a>, evitá navegar
+    const a = img.closest('a');
+    if (a) e.preventDefault();
+
+    openAt(i);
+  }, true);
+
+  // Controles
+  btnX?.addEventListener('click', () => close());
+  btnPrev?.addEventListener('click', () => go(-1));
+  btnNext?.addEventListener('click', () => go(1));
+
+  document.addEventListener('keydown', (e) => {
+    if (lb.hidden) return;
+    if (e.key === 'Escape') close();
+    else if (e.key === 'ArrowRight') go(1);
+    else if (e.key === 'ArrowLeft')  go(-1);
+  }, { passive: true });
+
+  // Swipe en mobile
+  let x0 = null;
+  lb.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; }, { passive:true });
+  lb.addEventListener('touchend', (e) => {
+    if (x0 == null) return;
+    const dx = e.changedTouches[0].clientX - x0;
+    if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+    x0 = null;
+  }, { passive:true });
+
+  // Recolectá al principio…
+  collect();
+
+  // …y si el mosaico inyecta imágenes luego, volvemos a recolectar
+  const mm = document.getElementById('microMosaic');
+  if (mm) {
+    const mo = new MutationObserver(collect);
+    mo.observe(mm, { childList: true, subtree: true });
+  }
+
+  // Cerrar tocando el fondo oscuro
+  lb.addEventListener('click', (e) => { if (e.target === lb) close(); });
+})();
+
+// === Orígenes: zoom individual en scroll (sin dwell) ===
+(() => {
+  const list  = document.querySelector('.ori-timeline');
+  if (!list) return;
+  const items = Array.from(list.querySelectorAll('li'));
+  if (!items.length) return;
+
+  const BASE_MAX_SCALE = 2.2;  // zoom deseado
+  const REACH          = 0.38; // radio de influencia para elegir candidato
+
+  const centerY = el => {
+    const r = el.getBoundingClientRect();
+    return scrollY + r.top + r.height/2;
+  };
+
+  function maxScaleThatFits(li){
+    const r   = li.getBoundingClientRect();
+    const pad = 32; // margen de respiro
+    const fit = Math.max(1, (innerWidth - pad) / Math.max(1, r.width));
+    return Math.min(BASE_MAX_SCALE, fit);
+  }
+
+  let cur = -1; // índice actualmente enfocado
+
+  function update(){
+    const vh   = innerHeight;
+    const midY = scrollY + vh * 0.5;
+
+    // Puntaje por cercanía al centro
+    let best = -1, bi = -1;
+    for (let i = 0; i < items.length; i++){
+      const d  = Math.abs(centerY(items[i]) - midY);
+      const t  = Math.min(d / (vh * REACH), 1);
+      const s  = 1 - t; // 1 = más cerca del centro
+      if (s > best){ best = s; bi = i; }
+    }
+
+    if (bi !== cur) cur = bi;
+
+    items.forEach((li, i) => {
+      const focused = (i === cur);
+      li.classList.toggle('is-focus', focused);
+      if (!focused){
+        li.style.transform     = 'none';
+        li.style.zIndex        = '0';
+        li.style.marginTop     = '';
+        li.style.marginBottom  = '';
+        return;
+      }
+
+      const s     = maxScaleThatFits(li);
+      const h     = li.getBoundingClientRect().height;
+      const extra = Math.max(20, (s - 1) * h * 0.55); // aire vertical
+
+      li.style.transform     = `scale(${s})`;
+      li.style.zIndex        = '100';
+      li.style.marginTop     = `${extra}px`;
+      li.style.marginBottom  = `${extra}px`;
+    });
+  }
+
+  addEventListener('scroll', update, { passive:true });
+  addEventListener('resize', update, { passive:true });
+  document.addEventListener('DOMContentLoaded', update);
+  update(); // primer pintado
+})();

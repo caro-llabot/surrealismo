@@ -448,17 +448,29 @@ main.ob .micro .r5{ width: min(60vw, 780px);  margin: 0 auto; }
   font-size: 14px; text-transform: uppercase; letter-spacing: .04em;
 }
 
-input[type="email"],
-input[type="password"]{
+/* Inputs del formulario de registro/login */
+.auth-form input[type="text"],
+.auth-form input[type="email"],
+.auth-form input[type="password"]{
   font-family: var(--font-secondary, "IBM Plex Mono", monospace);
-  font-size: 16px; line-height: 1.2;
+  font-size: 16px;
+  line-height: 1.2;
   padding: 12px 12px;
   border: 1px solid var(--line, rgba(0,0,0,.22));
   border-radius: 10px;
   background: rgba(255,255,255,.9);
   outline: none;
+
+  /* para uniformar medidas */
+  width: 100%;
+  box-sizing: border-box;
 }
-input:focus{ border-color: rgba(0,0,0,.6); box-shadow: 0 0 0 3px rgba(0,0,0,.08) inset; }
+
+.auth-form input:focus{
+  border-color: rgba(0,0,0,.6);
+  box-shadow: 0 0 0 3px rgba(0,0,0,.08) inset;
+}
+
 
 .pw-field{ position: relative; }
 .pw-field input{ width: 100%; padding-right: 44px; }
@@ -1595,3 +1607,591 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
 
 .html-is-logged .nav .nav-when-guest,
 .html-is-logged .nav .js-auth-logged-out { display: none !important; }
+
+
+.auth-form .form-row { margin-bottom: 12px; }
+
+.auth-form .form-input {
+  width: 100%;
+  box-sizing: border-box;
+  height: 44px;
+  padding: 10px 14px;
+  border: 1px solid #d7d2c8;
+  border-radius: 8px;
+  background: #fff;
+  font: 400 16px/1.2 'Inter', system-ui, sans-serif;
+  color: #111;
+  outline: none;
+  transition: box-shadow .2s, border-color .2s;
+}
+
+.auth-form .form-input:hover { border-color: #c8c2b6; }
+.auth-form .form-input:focus {
+  border-color: #111;
+  box-shadow: 0 0 0 4px rgba(0,0,0,.06);
+}
+
+
+/* ====== Barra de búsqueda (sin cambiar HTML) ====== */
+.arc-search{
+  display:flex;
+  align-items:center;
+  gap:.6rem;
+  flex-wrap:wrap;
+  margin:.6rem 0 1.2rem;
+}
+
+/* El input crece, mantiene alto actual y deja espacio para la X */
+#arcQuery{
+  flex:1 1 420px;
+  min-width:260px;
+  padding-right:2.2rem;          /* lugar para la X */
+}
+
+/* Evitar la doble X nativa de WebKit */
+#arcQuery::-webkit-search-cancel-button{
+  -webkit-appearance:none;
+  appearance:none;
+  display:none;
+}
+
+/* La X propia se “monta” sobre el borde derecho del input */
+#arcClear{
+  width:28px; height:28px;
+  border:0;
+  background:transparent;
+  font-size:18px; line-height:1;
+  cursor:pointer;
+  opacity:.55;
+  /* truco: como el botón está a la derecha del input en el DOM,
+     lo “metemos” encima con margen negativo */
+  margin-left:-2.2rem;
+  align-self:center;
+}
+#arcClear:hover{ opacity:.85; }
+
+/* Botón Buscar: misma altura visual que el input, sin desbordes */
+.arc-search .btn-primary{
+  height:42px; padding:0 14px; white-space:nowrap;
+}
+
+/* Ajuste del “bloque vacío” bajo el navbar fijo (solo en Archivo/Resultados) */
+:root{ --nav-h:64px; }
+main.arc{ padding-top:calc(var(--nav-h) + 24px); }
+
+
+/* ===== Lightbox Obras ===== */
+.ob-lightbox{
+  position:fixed; inset:0; background:rgba(10,10,12,.85);
+  display:grid; grid-template-columns:auto 1fr auto; grid-template-rows:auto 1fr auto;
+  align-items:center; justify-items:center; z-index:9999;
+}
+.ob-lightbox[hidden]{ display:none; }
+
+.ob-lb__stage{ margin:0; max-width:min(92vw,1200px); max-height:82vh; display:grid; gap:10px; }
+.ob-lb__stage img{ max-width:100%; max-height:72vh; border-radius:10px; box-shadow:0 12px 40px rgba(0,0,0,.35); }
+.ob-lb__stage figcaption{ color:#fff; text-align:center; font-weight:600; }
+
+.ob-lb__close,.ob-lb__prev,.ob-lb__next{
+  border:0; background:rgba(255,255,255,.14); color:#fff; cursor:pointer;
+  width:44px; height:44px; border-radius:50%; font-size:28px; display:grid; place-items:center;
+}
+.ob-lb__close{ grid-column:3; grid-row:1; margin:10px; }
+.ob-lb__prev { grid-column:1; grid-row:2; }
+.ob-lb__next { grid-column:3; grid-row:2; }
+
+/* Asegurar que el mosaico es clickeable */
+#microMosaic,
+#microMosaic * {
+  pointer-events: auto;
+}
+
+/* Cursor de zoom en las imágenes de Obras */
+#microMosaic img,
+#obCarousel .obc-card img {
+  cursor: zoom-in;
+}
+
+/* Overlay bien arriba y bloqueando fondo */
+.ob-lightbox {
+  z-index: 9999;
+}
+body.no-scroll {
+  overflow: hidden;
+}
+/* ——— Obras: asegurar clic y stacking correcto ——— */
+.ob-hero { position: relative; z-index: 0; }
+#microMosaic { position: relative; z-index: 5; } /* por encima de cualquier overlay */
+#obCarousel { position: relative; z-index: 5; }
+
+#microMosaic img,
+#obCarousel .obc-card img {
+  pointer-events: auto;         /* habilita clicks aunque hubiera algo padre con none */
+  cursor: zoom-in;
+}
+
+/* Por si algún pseudo-elem. estuviera tapando (defensive) */
+.ob-hero::after { pointer-events: none !important; }
+/* Ubicar el stage en el centro del grid del overlay */
+.ob-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(10,10,12,.85);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto 1fr auto;
+  align-items: center;
+  justify-items: center;
+  z-index: 9999;
+}
+.ob-lightbox[hidden]{ display:none; }
+
+/* >>> ESTA LÍNEA ES LA CLAVE QUE FALTABA <<< */
+.ob-lb__stage { grid-column: 2; grid-row: 2; }
+
+.ob-lb__stage img{
+  max-width: 100%;
+  max-height: 72vh;
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.35);
+}
+.ob-lb__stage figcaption{
+  color:#fff; text-align:center; font-weight:600;
+}
+
+.ob-lb__close,.ob-lb__prev,.ob-lb__next{
+  border:0; background:rgba(255,255,255,.14); color:#fff; cursor:pointer;
+  width:44px; height:44px; border-radius:50%; font-size:28px; display:grid; place-items:center;
+}
+.ob-lb__close{ grid-column:3; grid-row:1; margin:10px; }
+.ob-lb__prev { grid-column:1; grid-row:2; }
+.ob-lb__next { grid-column:3; grid-row:2; }
+/* === OVERRIDE: agrandar obra en el lightbox (3/4 pantalla) === */
+.ob-lightbox .ob-lb__stage{
+  max-width: none !important;
+  max-height: none !important;
+  padding: 0 !important;
+}
+
+.ob-lightbox .ob-lb__stage img{
+  width: 75vw !important;   /* fuerza el ancho (agranda aunque el archivo sea chico) */
+  max-height: 78vh !important;
+  height: auto !important;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 18px 48px rgba(0,0,0,.45);
+}
+
+
+/* Orígenes: efecto suave */
+.ori-timeline li{
+  transform-origin: left center;
+  transition: transform .18s ease;
+  will-change: transform;
+}
+.ori-timeline li .year{
+  display:inline-block;
+  transition: inherit;
+}
+
+/* Auth: unificación inputs login/register */
+.auth input[type="text"],
+.auth input[type="email"],
+.auth input[type="password"]{
+  height: 44px;
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--line, rgba(0,0,0,.22));
+  border-radius: 12px;
+  background: #fff;
+  font: 400 16px/1.2 var(--font-secondary, "IBM Plex Mono", monospace);
+  box-sizing: border-box;
+}
+
+.auth input[type="text"]:focus,
+.auth input[type="email"]:focus,
+.auth input[type="password"]:focus{
+  border-color: rgba(0,0,0,.6);
+  box-shadow: 0 0 0 3px rgba(0,0,0,.08) inset;
+}
+
+/* Botón de favoritos */
+.fav-link{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:8px 12px;
+  border:1px solid var(--glass-border);
+  border-radius:999px;
+  background:rgba(255,255,255,.75);
+  color:var(--ink);
+  font:700 13px/1 var(--font-primary);
+  text-decoration:none;
+  cursor:pointer;
+  transition: background .2s, border-color .2s, transform .1s, box-shadow .2s;
+}
+.fav-link:hover{
+  background: color-mix(in oklab, var(--accent-1) 18%, white);
+  border-color: var(--accent-1);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0,0,0,.08);
+}
+.fav-link.is-on{
+  background: color-mix(in oklab, var(--accent-1) 28%, white);
+  border-color: var(--accent-1);
+}
+
+/* Archivo/Resultados: layout sólido para el buscador */
+.page-archivo .arc-search,
+.is-results   .arc-search{
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto; /* input (+X) | botón Buscar */
+  align-items: center;
+  gap: .6rem;
+}
+
+/* Input con colchón para lupa a la izq. y X a la der. */
+.page-archivo #arcQuery,
+.is-results   #arcQuery{
+  height: 40px;
+  width: 100%;
+  padding-left: 2.2rem;  /* lupa embebida */
+  padding-right: 2.4rem; /* espacio para la X */
+  border: 1.5px solid var(--ink-15, #d9d6cd);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 1px 0 rgba(0,0,0,.04);
+}
+
+/* La X posicionada *encima* del input, sin mover nada */
+.page-archivo #arcClear,
+.is-results   #arcClear{
+  position: absolute;
+  right: calc(90px + 8px); /* 90px ≈ ancho mínimo del botón Buscar */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px; height: 28px;
+  margin: 0;
+  border: 0; border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+.page-archivo #arcClear::after,
+.is-results   #arcClear::after{
+  content: '×';
+  font-weight: 700; font-size: 18px; line-height: 1;
+  color: #8a867d;
+}
+.page-archivo #arcClear:hover::after,
+.is-results   #arcClear:hover::after{ color:#111; }
+
+/* Botón Buscar: altura pareja con el input */
+.page-archivo .arc-search .btn-primary,
+.is-results   .arc-search .btn-primary{
+  height: 40px;
+  padding: 0 14px;
+  white-space: nowrap;
+  position: relative; /* clave para que la X calcule bien el right */
+}
+
+/* Evitar doble X nativa */
+#arcQuery::-webkit-search-cancel-button{ -webkit-appearance: none; }
+/* Orígenes: animación más lenta y foco marcado */
+.ori-timeline li{
+  transform-origin: left center;
+  transition: transform .35s cubic-bezier(.25,.6,.2,1); /* más lenta/suave */
+  will-change: transform;
+}
+.ori-timeline li.is-focus .year{
+  /* opcional: leve realce del año enfocado */
+  text-shadow: 0 6px 18px rgba(0,0,0,.15);
+}
+/* Orígenes: animación más lenta + más aire base entre ítems */
+.ori-timeline li{
+  transform-origin: left center;
+  transition: transform .55s cubic-bezier(.23,.68,.2,1);
+  padding: 22px 0 22px 20px;      /* antes 14px: más respiración base */
+}
+
+.ori-timeline li.is-focus .year{
+  text-shadow: 0 8px 22px rgba(0,0,0,.18);
+}
+/* Orígenes — zoom individual y sin “empujes” */
+.ori-timeline { position: relative; }
+
+.ori-timeline li{
+  /* Crece hacia la derecha y abajo para no tapar subtítulos */
+  transform-origin: left top;
+  transition: transform .65s cubic-bezier(.23,.68,.2,1), margin .35s ease;
+  will-change: transform, margin;
+  /* Un poco más de aire base entre ítems */
+  padding: 22px 0 22px 20px;
+}
+
+/* El foco resalta tipografía sin agrandar al resto */
+.ori-timeline li.is-focus .year{
+  text-shadow: 0 8px 22px rgba(0,0,0,.18);
+}
+
+/* Evita cambios indeseados en hermanos: todos estáticos salvo el foco */
+.ori-timeline li:not(.is-focus){
+  transform: none !important;
+}
+/* Orígenes — zoom individual */
+.ori-timeline { position: relative; }
+
+.ori-timeline li{
+  transform-origin: left top;
+  transition: transform .85s cubic-bezier(.23,.68,.2,1), margin .45s ease;
+  will-change: transform, margin;
+  padding: 22px 0 22px 20px;
+}
+
+.ori-timeline li.is-focus .year{
+  text-shadow: 0 8px 22px rgba(0,0,0,.18);
+}
+
+.ori-timeline li:not(.is-focus){
+  transform: none !important;
+}
+/* ARCHIVO — limpia margen y línea superior */
+.arc-hero {
+  padding-top: calc(var(--nav-h) + 24px);
+  border-top: none !important;
+  margin-top: 0 !important;
+}
+/* ARCHIVO — buscador limpio y alineado */
+.arc-search {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  margin: 1.25rem 0 2rem;
+  flex-wrap: nowrap;
+}
+
+.arc-search label {
+  display: none; /* oculta el texto “Buscar” redundante */
+}
+
+.arc-search input[type="search"] {
+  flex: 1 1 440px;
+  min-width: 260px;
+  height: 42px;
+  border: 1.5px solid var(--glass-border);
+  border-radius: 10px;
+  padding: 0 2.4rem 0 2.4rem; /* espacio para icono y X */
+  font: 500 16px/1.2 var(--font-secondary);
+  background: rgba(255,255,255,.9);
+  background-image: url("data:image/svg+xml,%3Csvg width='18' height='18' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='11' cy='11' r='7' stroke='%238A867D' stroke-width='2'/%3E%3Cpath d='M20 20L17 17' stroke='%238A867D' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 0.8rem center;
+  background-size: 18px 18px;
+  color: var(--ink);
+}
+
+.arc-search input::placeholder {
+  color: #8a867d;
+}
+
+.arc-search button {
+  height: 42px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: var(--accent-1);
+  color: #fff;
+  font-family: var(--font-primary);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  padding: 0 16px;
+  cursor: pointer;
+  transition: background .2s ease;
+}
+
+.arc-search button:hover {
+  background: color-mix(in oklab, var(--accent-1) 80%, black);
+}
+
+#arcClear {
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  position: relative;
+  margin-left: -2.2rem;
+  cursor: pointer;
+  color: #8a867d;
+  font-weight: 700;
+  font-size: 18px;
+  transition: color .2s ease;
+}
+
+#arcClear:hover {
+  color: var(--ink);
+}
+
+/* Evita la X nativa del input */
+input[type="search"]::-webkit-search-cancel-button { display: none; -webkit-appearance: none; }
+/* ARCHIVO — estilos del botón Guardar / Quitar */
+.arc-card button.fav-toggle {
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  background: rgba(0,0,0,.08);
+  color: var(--ink);
+  font-family: var(--font-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+
+.arc-card button.fav-toggle:hover {
+  background: var(--accent-1);
+  color: #fff;
+  border-color: var(--accent-1);
+}
+
+/* estado activo (guardado) */
+.arc-card button.fav-toggle.is-saved {
+  background: var(--accent-1);
+  color: #fff;
+  border-color: var(--accent-1);
+}
+.arc-card button.fav-toggle.is-saved:hover {
+  filter: brightness(.92);
+}
+/* ARCHIVO — corregir espacio arriba del título */
+main.arc{
+  padding-top: 0 !important;   /* usá solo el padding del body */
+}
+
+.arc-hero{
+  padding-top: calc(var(--nav-h) + 16px);  /* parecido al resto de páginas */
+}
+/* ===== ARCHIVO — Buscador alineado ===== */
+.arc-search{
+  display:flex;
+  align-items:center;
+  gap:.6rem;
+  flex-wrap:nowrap;
+  margin:1.25rem 0 2rem;
+}
+
+.arc-search label{
+  display:none; /* el texto real lo maneja .sr-only */
+}
+
+#arcQuery{
+  flex:1 1 440px;
+  min-width:260px;
+  height:42px;
+  border:1.5px solid var(--glass-border);
+  border-radius:10px;
+  padding:0 2.4rem 0 2.4rem;    /* espacio para lupa y X */
+  font:500 16px/1.2 var(--font-secondary);
+  background:#fff;
+  background-image:url("data:image/svg+xml,%3Csvg width='18' height='18' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='11' cy='11' r='7' stroke='%238A867D' stroke-width='2'/%3E%3Cpath d='M20 20L17 17' stroke='%238A867D' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:.8rem center;
+  background-size:18px 18px;
+  color:var(--ink);
+}
+
+#arcQuery::placeholder{
+  color:#8a867d;
+}
+
+/* Botón X que se “monta” sobre el borde derecho */
+#arcClear{
+  width:26px;
+  height:26px;
+  border:0;
+  background:transparent;
+  margin-left:-2.2rem;   /* lo apoya sobre el borde del input */
+  cursor:pointer;
+  font-size:18px;
+  line-height:1;
+  color:#8a867d;
+  position:relative;
+}
+#arcClear::after{
+  content:'×';
+  font-weight:700;
+  transform:translateY(-1px);
+}
+#arcClear:hover{ color:var(--ink); }
+
+/* Quitar la X nativa del navegador */
+input[type="search"]::-webkit-search-cancel-button{
+  -webkit-appearance:none;
+  appearance:none;
+}
+
+/* Botón “Buscar” */
+.arc-search .btn-primary{
+  height:42px;
+  padding:0 16px;
+  border-radius:10px;
+  white-space:nowrap;
+}
+/* ===== ARCHIVO — Botón Guardar / Quitar ===== */
+.arc-actions{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-top:8px;
+}
+
+.arc-card .btn-secondary{
+  border:1px solid var(--glass-border);
+  border-radius:8px;
+  padding:6px 10px;
+  background:rgba(0,0,0,.05);
+  color:var(--ink);
+  font-family:var(--font-secondary);
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  transition:background .18s ease, color .18s ease, border-color .18s ease, transform .1s ease;
+}
+
+.arc-card .btn-secondary:hover{
+  background:var(--accent-1);
+  color:#fff;
+  border-color:var(--accent-1);
+  transform:translateY(-1px);
+}
+/* ===== ARCHIVO — Botón Buscar corregido ===== */
+.arc-btn-search{
+  height: 42px;
+  padding: 0 14px;          /* Achica el relleno → tamaño más natural */
+  border-radius: 999px;
+  border: 1px solid var(--line, rgba(0,0,0,.22));
+
+  background: var(--accent-1);
+  color: #fff;
+
+  font-family: var(--font-primary, "Oswald", sans-serif);
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-weight: 700;
+
+  display: inline-flex;     /* NO estira */
+  align-items: center;
+  justify-content: center;
+
+  width: auto;              /* 🔥 clave: tamaño natural del texto */
+  flex: 0 0 auto;           /* 🔥 clave: no estirar */
+  white-space: nowrap;      /* evita que el texto salte */
+  cursor: pointer;
+}
+
+.arc-btn-search:hover{
+  background: color-mix(in oklab, var(--accent-1) 80%, #ffffff 20%);
+}
+.arc-search button{
+  width: auto;
+}

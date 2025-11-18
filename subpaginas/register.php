@@ -97,14 +97,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <div class="form-msg" style="color:#b02222;"><?= htmlspecialchars(implode(' · ', $errors)) ?></div>
     <?php endif; ?>
 
-    <form method="POST" novalidate>
-      <div class="form-row"><label for="name">Nombre completo</label><input id="name" name="full_name" required value="<?= htmlspecialchars($_POST['full_name'] ?? '') ?>"></div>
-      <div class="form-row"><label for="email">Email</label><input id="email" name="email" type="email" required value="<?= htmlspecialchars($_POST['email'] ?? '') ?>"></div>
-      <div class="form-row"><label for="password">Contraseña</label><input id="password" name="password" type="password" minlength="8" required></div>
-      <div class="form-row"><label for="password2">Repetir contraseña</label><input id="password2" name="password2" type="password" minlength="8" required></div>
-      <button class="btn-primary" type="submit">Crear cuenta</button>
-      <p class="form-note">¿Ya tenés cuenta? <a class="link" href="<?= htmlspecialchars($BASE_URL) ?>/subpaginas/login.php">Ingresar</a></p>
-    </form>
+    <form method="POST" novalidate class="auth-form">
+  <div class="form-row">
+    <label for="name">Nombre completo</label>
+    <input id="name" name="full_name" type="text" class="form-input"
+           autocomplete="name" required
+           value="<?= htmlspecialchars($_POST['full_name'] ?? '') ?>">
+  </div>
+
+  <div class="form-row">
+    <label for="email">Email</label>
+    <input id="email" name="email" type="email" class="form-input"
+           autocomplete="email" required
+           value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
+  </div>
+
+  <div class="form-row">
+    <label for="password">Contraseña</label>
+    <input id="password" name="password" type="password" class="form-input"
+           autocomplete="new-password" minlength="8" required>
+  </div>
+
+  <div class="form-row">
+    <label for="password2">Repetir contraseña</label>
+    <input id="password2" name="password2" type="password" class="form-input"
+           autocomplete="new-password" minlength="8" required>
+  </div>
+
+  <button class="btn-primary" type="submit">Crear cuenta</button>
+  <p class="form-note">¿Ya tenés cuenta? <a class="link" href="<?= htmlspecialchars($BASE_URL) ?>/subpaginas/login.php">Ingresar</a></p>
+</form>
+
   </section>
 </main>
 <footer class="site-footer glass" role="contentinfo">
