@@ -68,6 +68,8 @@ if ($hasTable) {
             FROM archivo_items
             WHERE title LIKE CONCAT('%', ?, '%')
                OR author LIKE CONCAT('%', ?, '%')
+               OR tags LIKE CONCAT('%', ?, '%')
+               OR description LIKE CONCAT('%', ?, '%')
             ORDER BY year DESC, title ASC
             LIMIT ? OFFSET ?";
     $st = $conexion->prepare($sql);
